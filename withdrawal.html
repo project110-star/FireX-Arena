@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Withdrawal Requests</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+background:#0b0b0b;
+color:#fff;
+padding:20px;
+font-family:Poppins;
+}
+
+h1{
+text-align:center;
+color:#ffb400;
+margin-bottom:20px;
+}
+
+.request{
+background:#181818;
+padding:15px;
+border-radius:12px;
+margin-bottom:15px;
+border-left:4px solid #ffb400;
+}
+
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+font-weight:700;
+cursor:pointer;
+margin-top:10px;
+}
+
+.approveBtn{background:#00c853;color:white;}
+.rejectBtn{background:red;color:white;}
+
+.status{
+margin-top:10px;
+font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>💸 Withdrawal Requests</h1>
+<div id="requestList"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+onSnapshot,
+doc,
+updateDoc,
+getDoc
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+import {
+getAuth,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+/* 🔥 Firebase Config */
+const firebaseConfig = {
+apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+authDomain: "ff-tournament-eb06d.firebaseapp.com",
+projectId: "ff-tournament-eb06d",
+storageBucket: "ff-tournament-eb06d.firebasestorage.app",
+messagingSenderId: "265955776563",
+appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const requestList = document.getElementById("requestList");
+
+let isAdmin = false;
+
+/* 🔐 ADMIN CHECK */
+onAuthStateChanged(auth, async (user)=>{
+
+if(!user){
+requestList.innerHTML = "<p style='color:red;text-align:center'>Login Required</p>";
+return;
+}
+
+const snap = await getDoc(doc(db,"users",user.uid));
+
+isAdmin = snap.exists() && snap.data().role === "admin";
+
+if(!isAdmin){
+requestList.innerHTML = "<p style='color:red;text-align:center'>Admin Access Only</p>";
+return;
+}
+
+loadRequests();
+
+});
+
+/* 📥 LOAD REQUESTS */
+function loadRequests(){
+
+onSnapshot(collection(db,"withdrawRequest"), async(snapshot)=>{
+
+let html = "";
+
+for(const d of snapshot.docs){
+
+let req = d.data();
+
+let userName = "Unknown";
+
+if(req.uid){
+const userSnap = await getDoc(doc(db,"users",req.uid));
+if(userSnap.exists()){
+userName = userSnap.data().name || "Player";
+}
+}
+
+html += `
+<div class="request">
+<h3>${userName}</h3>
+<p><b>Amount:</b> ₹${req.amount}</p>
+<p><b>UPI:</b> ${req.upi}</p>
+<p><b>Status:</b> ${req.status}</p>
+
+${req.status === "pending" ? `
+<button class="approveBtn" onclick="approve('${d.id}')">APPROVE</button>
+<button class="rejectBtn" onclick="reject('${d.id}')">REJECT</button>
+` : `
+<div class="status">Request ${req.status.toUpperCase()}</div>
+`}
+
+</div>
+`;
+}
+
+requestList.innerHTML = html;
+
+});
+
+}
+
+/* ✅ APPROVE */
+window.approve = async(id)=>{
+try{
+await updateDoc(doc(db,"withdrawRequest",id),{
+status:"approved"
+});
+alert("Approved ✔");
+}catch(err){
+alert(err.message);
+}
+}
+
+/* ❌ REJECT */
+window.reject = async(id)=>{
+try{
+await updateDoc(doc(db,"withdrawRequest",id),{
+status:"rejected"
+});
+alert("Rejected ✔");
+}catch(err){
+alert(err.message);
+}
+}
+
+</script>
+
+</body>
+</html>
