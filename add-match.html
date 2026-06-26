@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Match</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Poppins,sans-serif;
+}
+
+body{
+    background:#0b0b0b;
+    color:#fff;
+    padding:20px;
+}
+
+.header{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.header h1{
+    color:#ffb400;
+}
+
+.box{
+    background:#181818;
+    padding:20px;
+    border-radius:15px;
+    border:2px solid #ffb400;
+    margin-bottom:20px;
+}
+
+input{
+    width:100%;
+    padding:14px;
+    margin:8px 0;
+    border:none;
+    border-radius:10px;
+    background:#222;
+    color:#fff;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:#ffb400;
+    color:#000;
+    font-weight:700;
+    margin-top:10px;
+    cursor:pointer;
+}
+
+.match{
+    background:#222;
+    padding:15px;
+    border-radius:12px;
+    margin-top:10px;
+    border-left:4px solid #ffb400;
+}
+
+.match img{
+    width:100%;
+    height:180px;
+    object-fit:cover;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+.deleteBtn{
+    background:red;
+    color:white;
+}
+
+.editBtn{
+    background:#00c853;
+    color:white;
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>➕ Add Match</h1>
+</div>
+
+<div class="box">
+
+    <input type="text" id="matchName" placeholder="Match Name">
+
+    <input type="number" id="entryFee" placeholder="Entry Fee">
+
+    <input type="number" id="prizePool" placeholder="Prize Pool">
+
+    <input type="number" id="killReward" placeholder="Per Kill Reward">
+
+    <input type="datetime-local" id="matchTime">
+
+    <input type="text" id="roomId" placeholder="Room ID">
+
+    <input type="text" id="roomPass" placeholder="Room Password">
+
+    <input type="text" id="matchImage"
+    placeholder="Match Image URL">
+
+    <input type="text" id="status"
+    placeholder="Status (upcoming/live/finished)">
+
+    <button onclick="addMatch()">ADD MATCH</button>
+
+</div>
+
+<div class="box">
+
+    <h2>All Matches</h2>
+
+    <div id="matchList"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+
+import {
+  getAuth,
+  onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+  getDoc
+}
+from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+/* FIREBASE */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+  authDomain: "ff-tournament-eb06d.firebaseapp.com",
+  projectId: "ff-tournament-eb06d",
+  storageBucket: "ff-tournament-eb06d.firebasestorage.app",
+  messagingSenderId: "265955776563",
+  appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* ADMIN CHECK */
+
+onAuthStateChanged(auth, async(user)=>{
+
+  if(!user){
+    alert("Please Login First");
+    location.href = "admin-login.html";
+    return;
+  }
+
+  const adminRef = doc(db,"users",user.uid);
+  const adminSnap = await getDoc(adminRef);
+
+  if(!adminSnap.exists() ||
+     adminSnap.data().role !== "admin"){
+
+      alert("Access Denied");
+      location.href = "admin-login.html";
+      return;
+  }
+
+  loadMatches();
+
+});
+
+
+/* ADD MATCH */
+
+window.addMatch = async()=>{
+
+  try{
+
+    await addDoc(collection(db,"matches"),{
+
+      name: document.getElementById("matchName").value,
+      entryFee: Number(document.getElementById("entryFee").value),
+      prizePool: Number(document.getElementById("prizePool").value),
+      killReward: Number(document.getElementById("killReward").value),
+      matchTime: document.getElementById("matchTime").value,
+      roomId: document.getElementById("roomId").value,
+      roomPass: document.getElementById("roomPass").value,
+      image: document.getElementById("matchImage").value,
+      status: document.getElementById("status").value || "upcoming"
+
+    });
+
+    alert("Match Added Successfully ✔");
+
+  }catch(err){
+
+    console.log(err);
+    alert(err.message);
+
+  }
+
+};
+
+
+/* LOAD MATCHES */
+
+function loadMatches(){
+
+onSnapshot(
+collection(db,"matches"),
+
+(snapshot)=>{
+
+    let html = "";
+
+    snapshot.forEach((d)=>{
+
+      let m = d.data();
+
+      html += `
+
+      <div class="match">
+
+        <img src="${m.image || 'https://via.placeholder.com/400x200'}">
+
+        <h3>${m.name}</h3>
+
+        <p>Entry Fee : ₹${m.entryFee}</p>
+
+        <p>Prize Pool : ₹${m.prizePool}</p>
+
+        <p>Per Kill : ₹${m.killReward}</p>
+
+        <p>Time : ${m.matchTime}</p>
+
+        <p>Room ID : ${m.roomId}</p>
+
+        <p>Password : ${m.roomPass}</p>
+
+        <p>Status : ${m.status || "upcoming"}</p>
+
+        <button class="editBtn"
+        onclick="editMatch(
+        '${d.id}',
+        '${m.name}',
+        '${m.entryFee}',
+        '${m.prizePool}',
+        '${m.roomId}',
+        '${m.roomPass}',
+        '${m.image || ""}',
+        '${m.status || "upcoming"}'
+        )">
+
+        EDIT MATCH
+
+        </button>
+
+        <button class="deleteBtn"
+        onclick="deleteMatch('${d.id}')">
+
+        DELETE MATCH
+
+        </button>
+
+      </div>
+
+      `;
+    });
+
+    document.getElementById("matchList").innerHTML =
+    html || "<p>No Matches Found</p>";
+
+},
+(error)=>{
+
+   console.log(error);
+   alert("Permission Denied. Check Firestore Rules.");
+
+});
+
+}
+
+
+/* DELETE MATCH */
+
+window.deleteMatch = async(id)=>{
+
+  if(confirm("Delete Match ?")){
+
+    try{
+
+      await deleteDoc(doc(db,"matches",id));
+      alert("Match Deleted");
+
+    }catch(err){
+
+      console.log(err);
+      alert(err.message);
+
+    }
+  }
+}
+
+
+/* EDIT MATCH */
+
+window.editMatch = async function(
+id,
+oldName,
+oldEntry,
+oldPrize,
+oldRoomId,
+oldRoomPass,
+oldImage,
+oldStatus
+){
+
+  let name = prompt("Match Name",oldName);
+  if(name==null) return;
+
+  let entryFee = prompt("Entry Fee",oldEntry);
+  let prizePool = prompt("Prize Pool",oldPrize);
+  let roomId = prompt("Room ID",oldRoomId);
+  let roomPass = prompt("Room Password",oldRoomPass);
+  let image = prompt("Image URL",oldImage);
+  let status = prompt(
+      "Status (upcoming/live/finished)",
+      oldStatus
+  );
+
+  try{
+
+    await updateDoc(doc(db,"matches",id),{
+
+      name,
+      entryFee:Number(entryFee),
+      prizePool:Number(prizePool),
+      roomId,
+      roomPass,
+      image,
+      status
+
+    });
+
+    alert("Match Updated Successfully ✔");
+
+  }catch(err){
+
+    console.log(err);
+    alert(err.message);
+
+  }
+
+}
+
+</script>
+</body>
+</html>
