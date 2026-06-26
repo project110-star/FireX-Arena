@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FF Signup</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+    margin:0;
+    font-family:Poppins;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#0b0b0b;
+}
+
+.box{
+    width:360px;
+    padding:25px;
+    background:#111;
+    border:2px solid #ffb400;
+    border-radius:15px;
+}
+
+h2{ text-align:center; color:#ffb400; }
+
+input{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    border-radius:10px;
+    background:#222;
+    color:white;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+    margin-top:10px;
+}
+
+.signup-btn{ background:#ffb400; color:black; }
+
+.google-btn{ background:white; color:black; }
+
+#toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#111;
+    color:white;
+    padding:12px 18px;
+    border-radius:10px;
+    opacity:0;
+    transition:0.3s;
+    border-left:4px solid #ffb400;
+}
+
+#toast.show{ opacity:1; bottom:40px; }
+
+#toast.error{ border-left:4px solid red; }
+#toast.success{ border-left:4px solid green; }
+
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>FF SIGNUP</h2>
+
+<form onsubmit="signupUser(event)">
+    <input type="number" placeholder="game user id (uid)" required>
+    <input type="email" placeholder="Email" required>
+    <input type="password" placeholder="Password" required>
+
+    <button class="signup-btn" type="submit">SIGN UP</button>
+</form>
+
+<button class="google-btn" onclick="googleSignup()">
+    🔵 Sign up with Google
+</button>
+
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+
+import { 
+    getAuth,
+    createUserWithEmailAndPassword,
+    GoogleAuthProvider,
+    signInWithPopup,
+    updateProfile
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+import {
+    getFirestore,
+    doc,
+    setDoc
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+/* FIREBASE CONFIG */
+const firebaseConfig = {
+    apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+    authDomain: "ff-tournament-eb06d.firebaseapp.com",
+    projectId: "ff-tournament-eb06d",
+    storageBucket: "ff-tournament-eb06d.firebasestorage.app",
+    messagingSenderId: "265955776563",
+    appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* TOAST */
+function toast(msg,type="success"){
+    const t=document.getElementById("toast");
+    t.innerText=msg;
+    t.className="show";
+
+    if(type==="error") t.classList.add("error");
+    if(type==="success") t.classList.add("success");
+
+    setTimeout(()=>t.classList.remove("show"),2500);
+}
+
+/* EMAIL SIGNUP */
+window.signupUser = async function(e){
+    e.preventDefault();
+
+    const name = e.target[0].value;
+    const email = e.target[1].value;
+    const password = e.target[2].value;
+
+    try{
+        const userCred = await createUserWithEmailAndPassword(auth,email,password);
+
+        await updateProfile(userCred.user,{
+            displayName:name
+        });
+
+        await setDoc(doc(db,"users",userCred.user.uid),{
+            name:name,
+            email:email,
+            wallet:0
+        });
+
+        toast("Signup Success","success");
+
+        setTimeout(()=>{
+            window.location.href="login.html";
+        },1200);
+
+    }catch(err){
+        console.log(err);
+        toast(err.code,"error");
+    }
+}
+
+/* GOOGLE SIGNUP */
+window.googleSignup = async function(){
+
+    try{
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+
+        const user = result.user;
+
+        await setDoc(doc(db,"users",user.uid),{
+            name:user.displayName,
+            email:user.email,
+            wallet:0
+        });
+
+        toast("Google Signup Success","success");
+
+        setTimeout(()=>{
+            window.location.href="dashboard.html";
+        },1200);
+
+    }catch(err){
+        console.log(err);
+        toast(err.code,"error");
+    }
+}
+
+</script>
+
+</body>
+</html>
