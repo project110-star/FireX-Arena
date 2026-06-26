@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FF Admin Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:#0b0b0b;
+    color:white;
+}
+
+.header{
+    background:#111;
+    padding:20px;
+    text-align:center;
+    border-bottom:2px solid #ffb400;
+}
+
+.header h1{
+    color:#ffb400;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+    padding:20px;
+}
+
+.card{
+    background:#181818;
+    border:2px solid #ffb400;
+    border-radius:15px;
+    padding:20px;
+    text-align:center;
+}
+
+.card h2{
+    color:#ffb400;
+    font-size:32px;
+}
+
+.card p{
+    margin-top:8px;
+}
+
+.menu{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+    padding:20px;
+}
+
+.menu button{
+    height:110px;
+    border:none;
+    border-radius:15px;
+    background:#181818;
+    color:#ffb400;
+    border:2px solid #ffb400;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.menu button:hover{
+    background:#ffb400;
+    color:#000;
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>FF ADMIN DASHBOARD</h1>
+</div>
+
+<div class="stats">
+
+    <div class="card">
+        <h2 id="totalUsers">0</h2>
+        <p>Total Users</p>
+    </div>
+
+    <div class="card">
+        <h2 id="totalMatches">0</h2>
+        <p>Total Matches</p>
+    </div>
+
+    <div class="card">
+        <h2 id="totalDeposits">0</h2>
+        <p>Deposits</p>
+    </div>
+
+    <div class="card">
+        <h2 id="totalWithdrawals">0</h2>
+        <p>Withdrawals</p>
+    </div>
+
+</div>
+
+<div class="menu">
+
+    <button onclick="location.href='add-match.html'">
+        ➕<br>Add Match
+    </button>
+
+    <button onclick="location.href='edit-match.html'">
+        ✏️<br>Edit Match
+    </button>
+
+    <button onclick="location.href='delete-match.html'">
+        🗑️<br>Delete Match
+    </button>
+
+    <button onclick="location.href='upload-qr.html'">
+        📷<br>Upload QR
+    </button>
+
+    <button onclick="location.href='deposit.html'">
+        💰<br>Deposits
+    </button>
+
+    <button onclick="location.href='withdrawal.html'">
+        🏦<br>Withdrawals
+    </button>
+
+    <button onclick="location.href='wallet.html'">
+        👛<br>Wallet
+    </button>
+
+    <button onclick="location.href='user.html'">
+        👥<br>Users
+    </button>
+
+    <button onclick="logout()">
+        🚪<br>Logout
+    </button>
+    
+<button onclick="location.href='winning.html'">
+        🏆<br>winning
+    </button>
+
+</div>
+
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+import {
+  getFirestore,
+  collection,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+  authDomain: "ff-tournament-eb06d.firebaseapp.com",
+  projectId: "ff-tournament-eb06d",
+  storageBucket: "ff-tournament-eb06d.firebasestorage.app",
+  messagingSenderId: "265955776563",
+  appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+// Firebase Initialize
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Check Login
+onAuthStateChanged(auth, (user) => {
+
+  if (!user) {
+    alert("Please login first");
+    window.location.href = "admin-login.html";
+    return;
+  }
+
+  console.log("Admin UID:", user.uid);
+
+  // Total Users
+  onSnapshot(collection(db, "users"), (snap) => {
+    document.getElementById("totalUsers").innerText = snap.size;
+  }, (err) => {
+    console.log("Users Error:", err);
+  });
+
+  // Total Matches
+  onSnapshot(collection(db, "matches"), (snap) => {
+    document.getElementById("totalMatches").innerText = snap.size;
+  }, (err) => {
+    console.log("Matches Error:", err);
+  });
+
+  // Total Deposits
+  onSnapshot(collection(db, "deposit_requests"), (snap) => {
+    document.getElementById("totalDeposits").innerText = snap.size;
+  }, (err) => {
+    console.log("Deposits Error:", err);
+  });
+
+  // Total Withdrawals
+  onSnapshot(collection(db, "withdraw_requests"), (snap) => {
+    document.getElementById("totalWithdrawals").innerText = snap.size;
+  }, (err) => {
+    console.log("Withdrawals Error:", err);
+  });
+
+});
+
+// Logout
+window.logout = async function () {
+
+  if (confirm("Logout Admin?")) {
+
+    await signOut(auth);
+    window.location.href = "admin-login.html";
+
+  }
+};
+
+</script>
+
+</body>.
+</html>
