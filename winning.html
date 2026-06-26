@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Winning</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Poppins,sans-serif;
+}
+
+body{
+    background:#0b0b0b;
+    color:#fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.box{
+    width:360px;
+    background:#181818;
+    padding:20px;
+    border-radius:15px;
+    border:2px solid #ffb400;
+}
+
+h1{
+    text-align:center;
+    color:#ffb400;
+    margin-bottom:20px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    border-radius:8px;
+    background:#222;
+    color:white;
+    outline:none;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#ffb400;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h1>🏆 Add Winning</h1>
+
+    <input type="text" id="uid" placeholder="Enter User UID">
+    <input type="number" id="amount" placeholder="Winning Amount">
+
+    <button id="btn" onclick="addWinning()">ADD WINNING</button>
+</div>
+
+<script type="module">
+
+/* 🔥 FIREBASE IMPORTS */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc } 
+from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+import { getAuth } 
+from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+/* 🔥 CONFIG */
+const firebaseConfig = {
+    apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+    authDomain: "ff-tournament-eb06d.firebaseapp.com",
+    projectId: "ff-tournament-eb06d",
+    storageBucket: "ff-tournament-eb06d.firebasestorage.app",
+    messagingSenderId: "265955776563",
+    appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+/* INIT */
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app); // 🔥 FIXED
+
+/* MAIN FUNCTION */
+window.addWinning = async () => {
+
+    const btn = document.getElementById("btn");
+
+    try {
+
+        // 🔥 CHECK LOGIN
+        if (!auth.currentUser) {
+            alert("Please login first");
+            return;
+        }
+
+        const uid = document.getElementById("uid").value.trim();
+        const amount = Number(document.getElementById("amount").value);
+
+        if (!uid || amount <= 0) {
+            alert("Enter valid UID and amount");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+
+        const userRef = doc(db, "users", uid);
+        const snap = await getDoc(userRef);
+
+        if (!snap.exists()) {
+            alert("User Not Found");
+            return;
+        }
+
+        const data = snap.data();
+
+        const newBalance = (data.balance || 0) + amount;
+        const newWinning = (data.winning || 0) + amount;
+
+        await updateDoc(userRef, {
+            balance: newBalance,
+            winning: newWinning
+        });
+
+        alert("Winning Added Successfully ✅");
+
+        document.getElementById("uid").value = "";
+        document.getElementById("amount").value = "";
+
+    } catch (error) {
+        console.error(error);
+        alert("Error: " + error.message);
+
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "ADD WINNING";
+    }
+};
+
+</script>
+
+</body>
+</html>
