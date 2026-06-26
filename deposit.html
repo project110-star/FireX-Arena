@@ -1,0 +1,205 @@
+<!DOCTYPE html>  <html>  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>Deposit Admin Panel</title>  <style>  
+body{  
+    margin:0;  
+    font-family:Arial,sans-serif;  
+    background:#0b0b0b;  
+    color:white;  
+    padding:20px;  
+}  
+  
+h2{  
+    text-align:center;  
+    color:#ffb400;  
+}  
+  
+.card{  
+    background:#1a1a1a;  
+    padding:15px;  
+    margin-top:15px;  
+    border-radius:10px;  
+    border-left:4px solid #ffb400;  
+}  
+  
+p{  
+    margin:8px 0;  
+}  
+  
+button{  
+    width:100%;  
+    padding:12px;  
+    margin-top:10px;  
+    background:#ffb400;  
+    border:none;  
+    border-radius:8px;  
+    font-weight:bold;  
+    cursor:pointer;  
+}  
+  
+button:disabled{  
+    background:#555;  
+    color:#ccc;  
+    cursor:not-allowed;  
+}  
+</style>  </head>  <body>  <h2>💰 Deposit Requests</h2>  <div id="list">
+    
+</div> 
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+
+import {
+    getAuth,
+    onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+import {
+    getFirestore,
+    collection,
+    onSnapshot,
+    doc,
+    runTransaction,
+    getDoc
+}
+from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+    authDomain: "ff-tournament-eb06d.firebaseapp.com",
+    projectId: "ff-tournament-eb06d",
+    storageBucket: "ff-tournament-eb06d.firebasestorage.app",
+    messagingSenderId: "265955776563",
+    appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+onAuthStateChanged(auth, async(user)=>{
+
+    if(!user){
+        alert("Please Login First");
+        location.href = "admin-login.html";
+        return;
+    }
+
+    const adminSnap = await getDoc(doc(db,"users",user.uid));
+
+    if(!adminSnap.exists() ||
+       adminSnap.data().role !== "admin"){
+
+        alert("Not Admin Access");
+        location.href = "admin-login.html";
+        return;
+    }
+
+    loadDeposits();
+
+});
+
+function loadDeposits(){
+
+    onSnapshot(
+        collection(db,"depositRequest"),
+
+        (snapshot)=>{
+
+            const list = document.getElementById("list");
+            list.innerHTML = "";
+
+            if(snapshot.empty){
+                list.innerHTML =
+                "<p style='text-align:center'>No Deposit Requests</p>";
+                return;
+            }
+
+            snapshot.forEach((d)=>{
+
+                const r = d.data();
+
+                const div = document.createElement("div");
+                div.className = "card";
+
+                div.innerHTML = `
+                    <p><b>UID:</b> ${r.uid || "N/A"}</p>
+                    <p><b>Amount:</b> ₹${r.amount || 0}</p>
+                    <p><b>UTR:</b> ${r.utr || "-"}</p>
+                    <p><b>Status:</b> ${r.status || "pending"}</p>
+
+                    <button
+                    ${r.status==="approved" ? "disabled" : ""}>
+
+                    ${r.status==="approved"
+                    ? "APPROVED ✔"
+                    : "APPROVE & ADD MONEY"}
+
+                    </button>
+                `;
+
+                div.querySelector("button").onclick = async()=>{
+
+                    if(r.status==="approved") return;
+
+                    try{
+
+                        await runTransaction(db, async(transaction)=>{
+
+                            const userRef =
+                            doc(db,"users",r.uid);
+
+                            const reqRef =
+                            doc(db,"depositRequest",d.id);
+
+                            const userSnap =
+                            await transaction.get(userRef);
+
+                            if(!userSnap.exists()){
+                                throw new Error("User Not Found");
+                            }
+
+                            let oldBalance =
+                            Number(userSnap.data().balance || 0);
+
+                            transaction.update(userRef,{
+                                balance: oldBalance +
+                                Number(r.amount)
+                            });
+
+                            transaction.update(reqRef,{
+                                status:"approved"
+                            });
+
+                        });
+
+                        alert("Money Added Successfully ✔");
+
+                    }catch(err){
+
+                        console.log(err);
+                        alert("Error : " + err.message);
+
+                    }
+
+                };
+
+                list.appendChild(div);
+
+            });
+
+        }
+
+    );
+
+}
+
+</script>
+
+</body>  
+</html> 
