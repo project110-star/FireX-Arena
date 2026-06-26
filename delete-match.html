@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delete Matches</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Poppins, Arial;
+    background:#0b0b0b;
+    color:white;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    color:#ffb400;
+}
+
+.match{
+    background:#1a1a1a;
+    padding:15px;
+    margin:10px 0;
+    border-radius:12px;
+    border-left:4px solid #ffb400;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+button{
+    padding:10px 15px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.deleteBtn{
+    background:red;
+    color:white;
+}
+
+.deleteBtn:hover{
+    background:#cc0000;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🗑 Delete Match Panel</h1>
+
+<div id="matchList"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    onSnapshot,
+    deleteDoc,
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+import {
+    getAuth,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+/* 🔥 Firebase Config */
+const firebaseConfig = {
+    apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+    authDomain: "ff-tournament-eb06d.firebaseapp.com",
+    projectId: "ff-tournament-eb06d",
+    messagingSenderId: "265955776563",
+    appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const matchList = document.getElementById("matchList");
+
+let isAdmin = false;
+
+/* 🔐 AUTH + ADMIN CHECK */
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        matchList.innerHTML = "<p style='color:red;text-align:center'>Login required</p>";
+        return;
+    }
+
+    try {
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+
+        isAdmin = userSnap.exists() &&
+                  userSnap.data().role === "admin";
+
+        if (!isAdmin) {
+            matchList.innerHTML = "<p style='color:red;text-align:center'>Admin access only</p>";
+            return;
+        }
+
+        loadMatches();
+
+    } catch (err) {
+        console.log(err);
+        matchList.innerHTML = "<p style='color:red;text-align:center'>Error loading admin</p>";
+    }
+});
+
+/* 📥 LOAD MATCHES */
+function loadMatches() {
+
+    onSnapshot(collection(db, "matches"), (snapshot) => {
+
+        matchList.innerHTML = "";
+
+        snapshot.forEach((d) => {
+
+            let m = d.data();
+
+            let div = document.createElement("div");
+            div.className = "match";
+
+            div.innerHTML = `
+                <div>
+                    <h3>${m.name || "No Name"}</h3>
+                    <p>Room ID: ${m.roomId || "-"}</p>
+                </div>
+
+                <button class="deleteBtn">DELETE</button>
+            `;
+
+            div.querySelector(".deleteBtn").onclick = async () => {
+
+                try {
+                    await deleteDoc(doc(db, "matches", d.id));
+                    alert("Match Deleted ✔");
+                } catch (err) {
+                    console.log(err);
+                    alert("Delete Failed: " + err.message);
+                }
+            };
+
+            matchList.appendChild(div);
+        });
+
+    }, (error) => {
+        console.log(error);
+        matchList.innerHTML = "<p style='color:red;text-align:center'>Permission Denied</p>";
+    });
+}
+
+</script>
+
+</body>
+</html>
