@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Management</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Poppins,sans-serif;
+}
+
+body{
+    background:#0b0b0b;
+    color:white;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    color:#ffb400;
+    margin-bottom:20px;
+}
+
+.searchBox{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:#1a1a1a;
+    color:white;
+    margin-bottom:20px;
+}
+
+.userCard{
+    background:#1a1a1a;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:15px;
+    border-left:4px solid #ffb400;
+}
+
+.userCard h3{
+    color:#ffb400;
+    margin-bottom:10px;
+    word-break:break-word;
+}
+
+.userCard p{
+    margin:6px 0;
+    font-size:14px;
+    word-break:break-word;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    margin-top:10px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.blockBtn{background:red;color:white;}
+.suspendBtn{background:orange;color:white;}
+.activeBtn{background:#00c853;color:white;}
+</style>
+</head>
+
+<body>
+
+<h1>👥 User Management</h1>
+
+<input type="text" id="searchBox" class="searchBox" placeholder="Search User by Email or UID">
+
+<div id="userList"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    onSnapshot,
+    doc,
+    updateDoc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+import {
+    getAuth,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+/* FIREBASE CONFIG */
+const firebaseConfig = {
+    apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+    authDomain: "ff-tournament-eb06d.firebaseapp.com",
+    projectId: "ff-tournament-eb06d",
+    storageBucket: "ff-tournament-eb06d.firebasestorage.app",
+    messagingSenderId: "265955776563",
+    appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let allUsers = [];
+
+/* 🔐 ADMIN CHECK */
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        document.getElementById("userList").innerHTML =
+        "<p style='color:red;text-align:center'>Login Required</p>";
+        return;
+    }
+
+    const snap = await getDoc(doc(db,"users",user.uid));
+
+    if (!snap.exists() || snap.data().role !== "admin") {
+        document.getElementById("userList").innerHTML =
+        "<p style='color:red;text-align:center'>Admin Access Only</p>";
+        return;
+    }
+
+    loadUsers();
+
+});
+
+/* 📥 LOAD USERS */
+function loadUsers(){
+
+onSnapshot(collection(db,"users"), (snapshot) => {
+
+    allUsers = [];
+
+    snapshot.forEach((d) => {
+        allUsers.push({
+            id: d.id,
+            ...d.data()
+        });
+    });
+
+    renderUsers(allUsers);
+
+}, (error) => {
+    console.log(error);
+    document.getElementById("userList").innerHTML =
+    "<p style='color:red;text-align:center'>Permission Denied</p>";
+});
+
+}
+
+/* 🧾 RENDER USERS */
+function renderUsers(users){
+
+let html = "";
+
+users.forEach((u) => {
+
+html += `
+<div class="userCard">
+
+<h3>${u.email || "No Email"}</h3>
+
+<p><b>UID :</b> ${u.id}</p>
+<p><b>Balance :</b> ₹${u.balance || 0}</p>
+<p><b>Winning :</b> ₹${u.winning || 0}</p>
+<p><b>Deposit :</b> ₹${u.totalDeposit || 0}</p>
+<p><b>Withdraw :</b> ₹${u.totalWithdraw || 0}</p>
+
+<p>
+<b>Status :</b>
+${
+    u.blocked ? "🚫 Blocked" :
+    u.suspended ? "⏸ Suspended" :
+    "✅ Active"
+}
+</p>
+
+<button class="blockBtn" onclick="blockUser('${u.id}')">BLOCK</button>
+<button class="suspendBtn" onclick="suspendUser('${u.id}')">SUSPEND</button>
+<button class="activeBtn" onclick="activateUser('${u.id}')">ACTIVATE</button>
+
+</div>
+`;
+});
+
+document.getElementById("userList").innerHTML =
+html || "<p>No Users Found</p>";
+
+}
+
+/* BLOCK */
+window.blockUser = async(uid) => {
+await updateDoc(doc(db,"users",uid), { blocked:true });
+alert("User Blocked");
+};
+
+/* SUSPEND */
+window.suspendUser = async(uid) => {
+await updateDoc(doc(db,"users",uid), { suspended:true });
+alert("User Suspended");
+};
+
+/* ACTIVATE */
+window.activateUser = async(uid) => {
+await updateDoc(doc(db,"users",uid), {
+blocked:false,
+suspended:false
+});
+alert("User Activated");
+};
+
+/* SEARCH */
+document.getElementById("searchBox").addEventListener("input", function(){
+
+let v = this.value.toLowerCase();
+
+let filtered = allUsers.filter(u =>
+(u.email || "").toLowerCase().includes(v) ||
+(u.id || "").toLowerCase().includes(v)
+);
+
+renderUsers(filtered);
+
+});
+
+</script>
+
+</body>
+</html>
