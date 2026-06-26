@@ -2,6 +2,8 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>FF Login</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
@@ -12,19 +14,22 @@
 margin:0;
 padding:0;
 box-sizing:border-box;
-font-family:Poppins;
+font-family:Poppins, sans-serif;
 }
 
 body{
 background: radial-gradient(circle at top,#1a1a1a,#000);
-height:100vh;
+min-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
+padding:15px;
 }
 
+/* CARD */
 .box{
 width:340px;
+max-width:95%;
 background:#111;
 padding:25px;
 border:2px solid #ffb400;
@@ -33,11 +38,14 @@ box-shadow:0 0 20px rgba(255,180,0,0.2);
 text-align:center;
 }
 
+/* TITLE */
 h2{
 color:#ffb400;
 margin-bottom:15px;
+font-size:22px;
 }
 
+/* INPUTS */
 input{
 width:100%;
 padding:12px;
@@ -47,8 +55,10 @@ border-radius:10px;
 background:#222;
 color:#fff;
 outline:none;
+font-size:14px;
 }
 
+/* BUTTONS */
 button{
 width:100%;
 padding:12px;
@@ -58,6 +68,7 @@ font-weight:bold;
 cursor:pointer;
 margin-top:10px;
 transition:0.2s;
+font-size:14px;
 }
 
 button:hover{
@@ -78,6 +89,22 @@ color:black;
 margin-top:10px;
 font-size:13px;
 color:#ccc;
+}
+
+/* MOBILE FIX */
+@media (max-width:480px){
+.box{
+padding:18px;
+}
+
+h2{
+font-size:20px;
+}
+
+input,button{
+font-size:13px;
+padding:11px;
+}
 }
 
 </style>
@@ -115,7 +142,7 @@ signInWithPopup
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI7GsTzM",
 authDomain: "ff-tournament-eb06d.firebaseapp.com",
 projectId: "ff-tournament-eb06d",
 appId: "1:265955776563:web:a50c1a8e6151c777242b46"
