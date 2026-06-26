@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FF Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins;
+}
+
+body{
+background: radial-gradient(circle at top,#1a1a1a,#000);
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.box{
+width:340px;
+background:#111;
+padding:25px;
+border:2px solid #ffb400;
+border-radius:15px;
+box-shadow:0 0 20px rgba(255,180,0,0.2);
+text-align:center;
+}
+
+h2{
+color:#ffb400;
+margin-bottom:15px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin:8px 0;
+border:none;
+border-radius:10px;
+background:#222;
+color:#fff;
+outline:none;
+}
+
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;
+margin-top:10px;
+transition:0.2s;
+}
+
+button:hover{
+transform:scale(1.02);
+}
+
+.login-btn{
+background:#ffb400;
+color:black;
+}
+
+.google-btn{
+background:white;
+color:black;
+}
+
+#msg{
+margin-top:10px;
+font-size:13px;
+color:#ccc;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>FF LOGIN</h2>
+
+<form onsubmit="login(event)">
+<input type="email" placeholder="Email" required>
+<input type="password" placeholder="Password" required>
+
+<button class="login-btn" type="submit">LOGIN</button>
+</form>
+
+<button class="google-btn" onclick="googleLogin()">
+Google Login
+</button>
+
+<p id="msg"></p>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import {
+getAuth,
+signInWithEmailAndPassword,
+GoogleAuthProvider,
+signInWithPopup
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+authDomain: "ff-tournament-eb06d.firebaseapp.com",
+projectId: "ff-tournament-eb06d",
+appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+/* LOGIN */
+window.login = async (e)=>{
+e.preventDefault();
+
+let email = e.target[0].value;
+let pass = e.target[1].value;
+
+try{
+await signInWithEmailAndPassword(auth,email,pass);
+window.location.replace("dashboard.html");
+}catch(err){
+document.getElementById("msg").innerText = err.code;
+}
+};
+
+/* GOOGLE LOGIN */
+window.googleLogin = async ()=>{
+try{
+const provider = new GoogleAuthProvider();
+await signInWithPopup(auth,provider);
+window.location.replace("dashboard.html");
+}catch(err){
+document.getElementById("msg").innerText = err.code;
+}
+};
+
+</script>
+
+</body>
+</html>
