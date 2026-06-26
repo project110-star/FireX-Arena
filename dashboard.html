@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gaming Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins
+}
+
+body{
+background:#0b0b0b;
+color:white;
+padding-bottom:80px;
+}
+
+/* ✅ FIXED 16:9 IMAGE */
+img{
+width:100%;
+max-width:100%;
+aspect-ratio: 16 / 9;
+object-fit: cover;
+display:block;
+margin:10px auto;
+border-radius:12px;
+background:#000;
+}
+
+/* HEADER */
+header{
+display:flex;
+justify-content:space-between;
+padding:15px;
+background:#111;
+border-bottom:2px solid #ffb400;
+position:sticky;
+top:0;
+}
+
+.wallet{
+background:#ffb400;
+color:black;
+padding:6px 12px;
+border-radius:10px;
+font-weight:700;
+}
+
+/* SECTIONS */
+.section{display:none;padding:15px}
+.section.active{display:block}
+
+.card{
+background:#1a1a1a;
+padding:15px;
+border-radius:12px;
+margin-top:12px;
+border-left:4px solid #ffb400;
+}
+
+.btn{
+width:100%;
+padding:10px;
+margin-top:8px;
+background:#ffb400;
+border:none;
+border-radius:8px;
+font-weight:700;
+cursor:pointer;
+}
+
+/* NAV */
+nav{
+position:fixed;
+bottom:0;
+width:100%;
+display:flex;
+background:#111;
+border-top:2px solid #ffb400;
+}
+
+nav button{
+flex:1;
+padding:12px;
+background:none;
+border:none;
+color:white;
+font-weight:600;
+}
+
+nav button.active{color:#ffb400}
+
+/* POPUP */
+.popup{
+display:none;
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.9);
+justify-content:center;
+align-items:center;
+}
+
+.popup-box{
+background:#111;
+padding:20px;
+border-radius:12px;
+width:90%;
+max-width:350px;
+border:2px solid #ffb400;
+text-align:center;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:8px;
+border:none;
+border-radius:8px;
+background:#222;
+color:white;
+}
+
+.popup-box h3{
+margin-bottom:10px;
+color:#ffb400;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div>
+<h3 id="name">Player</h3>
+<small id="email"></small>
+</div>
+
+<div class="wallet">₹ <span id="wallet">0</span></div>
+</header>
+
+<div class="section active" id="home">
+
+<div style="display:flex;gap:10px;margin-bottom:15px">
+<button class="btn" onclick="showMatchTab('upcoming')" style="margin:0">Upcoming</button>
+<button class="btn" onclick="showMatchTab('live')" style="margin:0">Live</button>
+<button class="btn" onclick="showMatchTab('finished')" style="margin:0">Finished</button>
+</div>
+
+<div id="upcomingMatches"></div>
+<div id="liveMatches" style="display:none"></div>
+<div id="finishedMatches" style="display:none"></div>
+
+</div>
+
+<div class="section" id="walletSec">
+<div class="card">
+<h3>Wallet</h3>
+<p>Balance: ₹<span id="bal2">0</span></p>
+<p>Winning: ₹<span id="winning">0</span></p>
+<button class="btn" onclick="openDeposit()">Deposit</button>
+<button class="btn" onclick="openWithdraw()">Withdraw</button>
+</div>
+</div>
+
+<div class="section" id="settings">
+<div class="card">
+<h3>Settings</h3>
+<p>Name: <span id="sname"></span></p>
+<p>Email: <span id="semail"></span></p>
+</div>
+</div>
+
+<nav>
+<button onclick="show('home')" class="active">Home</button>
+<button onclick="show('walletSec')">Wallet</button>
+<button onclick="show('settings')">Settings</button>
+</nav>
+
+<div class="popup" id="depositPopup">
+<div class="popup-box">
+<h3>Deposit</h3>
+
+<img src="qr.jpg" alt="QR Code">
+
+<input id="depAmount" placeholder="Amount">
+<input id="utr" placeholder="Transaction ID">
+
+<button class="btn" onclick="sendDeposit()">Send Request</button>
+<button class="btn" style="background:#333;color:white" onclick="closeDeposit()">Close</button>
+</div>
+</div>
+
+<div class="popup" id="withdrawPopup">
+<div class="popup-box">
+<h3>Withdraw</h3>
+
+<input id="upi" placeholder="UPI ID">
+<input id="wamt" placeholder="Amount">
+
+<button class="btn" onclick="sendWithdraw()">Send Request</button>
+<button class="btn" style="background:#333;color:white" onclick="closeWithdraw()">Close</button>
+</div>
+</div>
+
+<div class="popup" id="rulesPopup">
+<div class="popup-box">
+
+<h3>Tournament Rules</h3>
+
+<div style="text-align:left;line-height:28px;max-height:250px;overflow:auto">
+<p>1. No hacks allowed.</p>
+<p>2. No refund after joining.</p>
+<p>3. Join room on time.</p>
+<p>4. Wrong UID is player's responsibility.</p>
+<p>5. Admin decision is final.</p>
+</div>
+
+<label style="display:block;margin-top:15px">
+<input type="checkbox" id="acceptRule">
+ I Accept These Rules
+</label>
+
+<button class="btn" id="finalJoinBtn" disabled>
+JOIN NOW
+</button>
+
+</div>
+</div>
+
+<!-- (YOUR JS SAME AS BEFORE — NOT CHANGED) -->
+
+</body>
+</html>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+import {
+  getFirestore,
+  doc,
+  onSnapshot,
+  collection,
+  getDoc,
+  setDoc,
+  updateDoc,
+  addDoc
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+/* FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+  authDomain: "ff-tournament-eb06d.firebaseapp.com",
+  projectId: "ff-tournament-eb06d",
+  storageBucket: "ff-tournament-eb06d.firebasestorage.app",
+  messagingSenderId: "265955776563",
+  appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let userRef;
+let selectedMatchId = "";
+let selectedFee = 0;
+
+/* AUTH */
+onAuthStateChanged(auth, async (user) => {
+
+  if (!user) {
+    location.href = "login.html";
+    return;
+  }
+
+  document.getElementById("name").innerText = user.displayName || "Player";
+  document.getElementById("email").innerText = user.email;
+
+  document.getElementById("sname").innerText = user.displayName || "Player";
+  document.getElementById("semail").innerText = user.email;
+
+  userRef = doc(db, "users", user.uid);
+
+  let snap = await getDoc(userRef);
+
+  if (!snap.exists()) {
+    await setDoc(userRef, {
+      balance: 0,
+      winning: 0,
+      joinedMatches: [],
+      blocked: false
+    });
+  }
+
+  let data = (await getDoc(userRef)).data();
+
+  if (data.blocked) {
+    alert("Account Blocked");
+    await auth.signOut();
+    location.href = "login.html";
+    return;
+  }
+
+  onSnapshot(userRef, (snap) => {
+    let d = snap.data() || {};
+
+    document.getElementById("wallet").innerText = d.balance || 0;
+    document.getElementById("bal2").innerText = d.balance || 0;
+    document.getElementById("winning").innerText = d.winning || 0;
+  });
+
+  loadMatches();
+});
+
+/* LOAD MATCHES */
+async function loadMatches() {
+
+  onSnapshot(collection(db, "matches"), async (snapshot) => {
+
+    let upcomingHTML = "";
+    let liveHTML = "";
+    let finishedHTML = "";
+
+    let userSnap = await getDoc(userRef);
+    let joined = userSnap.data().joinedMatches || [];
+
+    snapshot.forEach((m) => {
+
+      let d = m.data();
+
+      let roomDetails = "";
+
+      if (joined.includes(m.id)) {
+        roomDetails = `
+        <div style="background:#222;padding:10px;border-radius:8px;margin-top:10px">
+          <p><b>Room ID :</b> ${d.roomId || "Coming Soon"}</p>
+          <p><b>Password :</b> ${d.roomPass || "Coming Soon"}</p>
+        </div>`;
+      }
+
+      let card = `
+      <div class="card">
+        <img src="${d.image || 'https://via.placeholder.com/400'}">
+
+        <h3>${d.name}</h3>
+        <p>Entry Fee : ₹${d.entryFee}</p>
+        <p>Prize Pool : ₹${d.prizePool || 0}</p>
+        <p>Per Kill : ₹${d.killReward || 0}</p>
+        <p>Match Time : ${d.matchTime || "-"}</p>
+
+        ${roomDetails}
+
+        <button class="btn"
+          ${joined.includes(m.id) ? "disabled" : ""}
+
+          onclick="${joined.includes(m.id)
+            ? ""
+            : `showRules('${m.id}',${d.entryFee})`}">
+
+          ${joined.includes(m.id) ? "JOINED ✔" : "JOIN MATCH"}
+        </button>
+      </div>`;
+
+      let status = (d.status || "upcoming").toLowerCase();
+
+      if (status === "live") liveHTML += card;
+      else if (status === "finished") finishedHTML += card;
+      else upcomingHTML += card;
+    });
+
+    document.getElementById("upcomingMatches").innerHTML = upcomingHTML || "<p>No Matches</p>";
+    document.getElementById("liveMatches").innerHTML = liveHTML || "<p>No Matches</p>";
+    document.getElementById("finishedMatches").innerHTML = finishedHTML || "<p>No Matches</p>";
+
+  });
+}
+
+/* SHOW RULES */
+window.showRules = (id, fee) => {
+  selectedMatchId = id;
+  selectedFee = fee;
+
+  document.getElementById("rulesPopup").style.display = "flex";
+  document.getElementById("acceptRule").checked = false;
+  document.getElementById("finalJoinBtn").disabled = true;
+};
+
+/* CHECKBOX ENABLE BUTTON */
+document.getElementById("acceptRule").addEventListener("change", function () {
+  document.getElementById("finalJoinBtn").disabled = !this.checked;
+});
+
+/* FINAL JOIN */
+document.getElementById("finalJoinBtn").onclick = async () => {
+  await joinMatch(selectedMatchId, selectedFee);
+};
+
+/* JOIN MATCH */
+window.joinMatch = async (id, fee) => {
+
+  let snap = await getDoc(userRef);
+  let data = snap.data();
+
+  let balance = Number(data.balance || 0);
+  let joined = data.joinedMatches || [];
+
+  if (joined.includes(id)) {
+    alert("Already Joined");
+    return;
+  }
+
+  if (balance < Number(fee)) {
+    alert("Not Enough Balance");
+    return;
+  }
+
+  joined.push(id);
+
+  await updateDoc(userRef, {
+    balance: balance - Number(fee),
+    joinedMatches: joined
+  });
+
+  alert("Match Joined Successfully ✔");
+
+  document.getElementById("rulesPopup").style.display = "none";
+  loadMatches();
+};
+
+/* CLOSE POPUP ON OUTSIDE CLICK */
+document.getElementById("rulesPopup").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) {
+    e.currentTarget.style.display = "none";
+  }
+});
+
+/* NAV */
+window.show = (id) => {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+};
+
+window.showMatchTab = (tab) => {
+  document.getElementById("upcomingMatches").style.display = "none";
+  document.getElementById("liveMatches").style.display = "none";
+  document.getElementById("finishedMatches").style.display = "none";
+
+  document.getElementById(tab + "Matches").style.display = "block";
+};
+
+/* DEPOSIT */
+window.openDeposit = () => document.getElementById("depositPopup").style.display = "flex";
+window.closeDeposit = () => document.getElementById("depositPopup").style.display = "none";
+
+window.sendDeposit = async () => {
+
+  let amount = Number(document.getElementById("depAmount").value);
+  let utr = document.getElementById("utr").value;
+
+  if (!amount || !utr) return alert("Fill All Fields");
+
+  await addDoc(collection(db, "depositRequest"), {
+    uid: auth.currentUser.uid,
+    amount,
+    utr,
+    status: "pending",
+    time: Date.now()
+  });
+
+  alert("Deposit Sent ✔");
+  closeDeposit();
+};
+
+/* WITHDRAW */
+window.openWithdraw = () => document.getElementById("withdrawPopup").style.display = "flex";
+window.closeWithdraw = () => document.getElementById("withdrawPopup").style.display = "none";
+
+window.sendWithdraw = async () => {
+
+  let amount = Number(document.getElementById("wamt").value);
+  let upi = document.getElementById("upi").value;
+
+  if (!amount || !upi) return alert("Fill All Fields");
+
+  let snap = await getDoc(userRef);
+  let data = snap.data();
+
+  if ((data.winning || 0) < amount) {
+    return alert("Not Enough Winning Balance");
+  }
+
+  await updateDoc(userRef, {
+    winning: (data.winning || 0) - amount,
+    balance: (data.balance || 0) - amount
+  });
+
+  await addDoc(collection(db, "withdrawRequest"), {
+    uid: auth.currentUser.uid,
+    email: auth.currentUser.email,
+    amount,
+    upi,
+    status: "pending",
+    time: Date.now()
+  });
+
+  alert("Withdraw Sent ✔");
+  closeWithdraw();
+};
+
+</script>
+</body>
+</html>
