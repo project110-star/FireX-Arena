@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Poppins,sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#0b0b0b;
+    padding:20px;
+}
+
+.box{
+    width:100%;
+    max-width:400px;
+    background:#111;
+    border:2px solid #ffb400;
+    border-radius:25px;
+    padding:35px;
+    text-align:center;
+    box-shadow:0 0 30px rgba(255,180,0,.3);
+}
+
+.logo{
+    font-size:60px;
+}
+
+h1{
+    color:#ffb400;
+    margin-top:10px;
+}
+
+p{
+    color:#aaa;
+    margin-bottom:30px;
+}
+
+input{
+    width:100%;
+    padding:15px;
+    margin:12px 0;
+    border:none;
+    border-radius:12px;
+    background:#222;
+    color:#fff;
+    font-size:16px;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    margin-top:15px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(90deg,#ffb400,#ff7b00);
+    color:#000;
+    font-size:17px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+#msg{
+    margin-top:20px;
+    font-size:16px;
+    color:red;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+
+<div class="logo">👑</div>
+
+<h1>Admin Login</h1>
+<p>Free Fire Tournament Panel</p>
+
+<input type="email" id="email" placeholder="Admin Email">
+
+<input type="password" id="password" placeholder="Password">
+
+<button onclick="loginAdmin()">LOGIN</button>
+
+<div id="msg"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+
+import {
+getAuth,
+signInWithEmailAndPassword,
+signOut
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+import {
+getFirestore,
+doc,
+getDoc
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+    authDomain: "ff-tournament-eb06d.firebaseapp.com",
+    projectId: "ff-tournament-eb06d",
+    storageBucket: "ff-tournament-eb06d.firebasestorage.app",
+    messagingSenderId: "265955776563",
+    appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+window.loginAdmin = async function(){
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const msg = document.getElementById("msg");
+
+    msg.innerText = "";
+
+    try{
+
+        const cred = await signInWithEmailAndPassword(auth,email,password);
+
+        const uid = cred.user.uid;
+
+        console.log("UID:", uid);
+
+        const snap = await getDoc(doc(db,"users",uid));
+
+        if(!snap.exists()){
+            await signOut(auth);
+            msg.innerText = "User document not found";
+            return;
+        }
+
+        const data = snap.data();
+
+        console.log("Firestore Data:", data);
+
+        let role = String(data.role || "")
+                    .trim()
+                    .toLowerCase();
+
+        console.log("Role =", role);
+
+        if(role === "admin"){
+
+            msg.style.color = "#00ff88";
+            msg.innerText = "Admin Login Success";
+
+            setTimeout(()=>{
+                window.location.href = "admin-dashboard.html";
+            },1000);
+
+        }else{
+
+            await signOut(auth);
+
+            msg.style.color = "red";
+            msg.innerText = "Not Admin Access";
+        }
+
+    }catch(err){
+
+        console.log(err);
+
+        msg.style.color = "red";
+        msg.innerText = err.message;
+    }
+}
+
+</script>
+
+</body>
+</html>
