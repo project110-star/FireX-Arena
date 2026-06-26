@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wallet Management</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins,sans-serif;
+}
+
+body{
+background:#0b0b0b;
+color:white;
+padding:20px;
+}
+
+h1{
+text-align:center;
+color:#ffb400;
+margin-bottom:20px;
+}
+
+.search{
+width:100%;
+padding:14px;
+border:none;
+border-radius:10px;
+background:#1a1a1a;
+color:white;
+margin-bottom:20px;
+outline:none;
+}
+
+.user{
+background:#181818;
+padding:15px;
+border-radius:12px;
+margin-bottom:15px;
+border-left:4px solid #ffb400;
+}
+
+.user p{
+margin:6px 0;
+word-break:break-word;
+}
+
+.btn{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+background:skyblue;
+color:black;
+font-weight:700;
+cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h1>💰 Wallet Management</h1>
+
+<input type="text" id="search" class="search" placeholder="Search by Email or UID">
+
+<div id="userList"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+onSnapshot,
+getDoc,
+doc
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+import {
+getAuth,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+/* 🔥 Firebase Config */
+const firebaseConfig = {
+apiKey: "AIzaSyB-xmpOXOANK5_4LWApxcjaifI8-7GsTzM",
+authDomain: "ff-tournament-eb06d.firebaseapp.com",
+projectId: "ff-tournament-eb06d",
+storageBucket: "ff-tournament-eb06d.firebasestorage.app",
+messagingSenderId: "265955776563",
+appId: "1:265955776563:web:a50c1a8e6151c777242b46"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let allUsers = [];
+let isAdmin = false;
+
+const userList = document.getElementById("userList");
+
+/* 🔐 AUTH CHECK */
+onAuthStateChanged(auth, async (user)=>{
+
+if(!user){
+userList.innerHTML = "<p style='color:red;text-align:center'>Login Required</p>";
+return;
+}
+
+const snap = await getDoc(doc(db,"users",user.uid));
+
+isAdmin = snap.exists() && snap.data().role === "admin";
+
+if(!isAdmin){
+userList.innerHTML = "<p style='color:red;text-align:center'>Admin Access Only</p>";
+return;
+}
+
+loadUsers();
+
+});
+
+/* 📥 LOAD USERS */
+function loadUsers(){
+
+onSnapshot(collection(db,"users"), (snapshot)=>{
+
+allUsers = [];
+
+snapshot.forEach((d)=>{
+allUsers.push({
+id: d.id,
+...d.data()
+});
+});
+
+renderUsers(allUsers);
+
+});
+
+}
+
+/* 🧾 RENDER USERS */
+function renderUsers(users){
+
+let html = "";
+
+users.forEach(u=>{
+
+html += `
+<div class="user">
+
+<p><b>UID:</b> ${u.id}</p>
+<p><b>Email:</b> ${u.email || "Not Available"}</p>
+
+<p><b>Balance:</b> ₹${u.balance || 0}</p>
+<p><b>Winning:</b> ₹${u.winning || 0}</p>
+
+<button class="btn" onclick="location.href='winning.html?uid=${u.id}'">
+🏆 Add Winning
+</button>
+
+<button class="btn" onclick="location.href='deposit.html?uid=${u.id}'">
+💵 Deposit
+</button>
+
+</div>
+`;
+});
+
+userList.innerHTML = html;
+
+}
+
+/* 🔎 SEARCH */
+document.getElementById("search").addEventListener("input", function(){
+
+let txt = this.value.toLowerCase();
+
+let filtered = allUsers.filter(u=>{
+return (u.email||"").toLowerCase().includes(txt) ||
+(u.id||"").toLowerCase().includes(txt);
+});
+
+renderUsers(filtered);
+
+});
+
+</script>
+
+</body>
+</html>
